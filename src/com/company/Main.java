@@ -18,7 +18,7 @@ public class Main {
         ArrayList<String> instructions = new ArrayList<>();
         int unusedBricks = 0;
         if (args.length != 1) {
-            System.out.println("klops");
+            System.out.println("klpops");
             return;
         }
         String path = args[0];
@@ -29,6 +29,10 @@ public class Main {
     private static void readFile(String path, ArrayList<String> bricksInBox, ArrayList<String> instructions, int unusedBricks) {
         try (FileReader fileReader = new FileReader(path); BufferedReader bufferedReader = new BufferedReader(fileReader)) {
             String line = bufferedReader.readLine();
+            String[] parts = line.split(":");
+            int number = Integer.parseInt(parts[0]);
+            line = parts[1];
+            line = line.replaceAll("[\\\\r\\\\n]", "");
             if (isValid(line)) {
                 while (line != null) {
                     filterNotUsed(line, unusedBricks);
@@ -37,7 +41,7 @@ public class Main {
                 }
             }
         } catch (IOException exception) {
-            System.out.println("klops");
+            System.out.println("klopps");
         }
     }
 
@@ -67,7 +71,7 @@ public class Main {
         if (!line.isEmpty() && isValid(line)) {
             lineCount++;
             if (lineCount >= maxLines) {
-                System.out.println("klops");
+                System.out.println("klopis");
             }
 
         }
@@ -104,8 +108,6 @@ public class Main {
             boolean hasAllBricks = checkBricksInBox(instructionList, bricksInBox);
             if (hasAllBricks) {
                 removeBricksFromBox(instructionList, bricksInBox);
-            } else {
-                continue;
             }
         }
         List<String> otherInstructions = instructions.stream().filter(instruction -> !isBolekPriority(instruction.charAt(0))).collect(Collectors.toList());
