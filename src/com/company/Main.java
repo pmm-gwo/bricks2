@@ -4,8 +4,10 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Main {
@@ -25,15 +27,14 @@ public class Main {
     }
 
     private static void readFile(String path, ArrayList<String> bricksInBox, ArrayList<String> instructions, int unusedBricks) {
-        try (FileReader fileReader = new FileReader(path);
-             BufferedReader bufferedReader = new BufferedReader(fileReader)) {
-            //zwalidowac dane we
+        try (FileReader fileReader = new FileReader(path); BufferedReader bufferedReader = new BufferedReader(fileReader)) {
             String line = bufferedReader.readLine();
-
-            while (line != null) {
-                filterNotUsed(line, unusedBricks);
-                putBricksInBox(line, bricksInBox);
-                addToInstructions(line, instructions);
+            if (isValid(line)) {
+                while (line != null) {
+                    filterNotUsed(line, unusedBricks);
+                    putBricksInBox(line, bricksInBox);
+                    addToInstructions(line, instructions);
+                }
             }
         } catch (IOException exception) {
             System.out.println("klops");
@@ -57,21 +58,28 @@ public class Main {
         instructions.add(line);
     }
 
-    private void assignBricksToInstructions(ArrayList<String> instructions, ArrayList<String> bricksInBox) {
-        List<String> bolekPriorityInstructions = instructions.stream()
-                .filter(instruction -> isBolekPriority(instruction.charAt(0)))
-                .sorted(Comparator.comparingInt(this::extractNumber))
-                .collect(Collectors.toList());
-        for (String instruction : instructions) {
-            assignToInstructions(instruction, bricksInBox);
-            if ()
-                //porownywanie znakow w liscie sortowanej badz nie
-                // poworo
+    private static boolean isValid(String line) {
+        String regex = "^\\d+:[(A-O)]{4}$";
+        int maxLines = 150_000_000;
+        int lineCount = 0;
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(line);
+        if (!line.isEmpty() && isValid(line)) {
+            lineCount++;
+            if (lineCount >= maxLines) {
+                System.out.println("klops");
+            }
+
         }
-        
-        List<String> otherInstructions = instructions.stream()
-                .filter(instruction -> !isBolekPriority(instruction.charAt(0)))
-                .collect(Collectors.toList());
+        return matcher.matches();
+    }
+
+    private static void removeBricksFromBox(List<String> instructionList, ArrayList<String> bricksInBox) {
+        bricksInBox.remove(instructionList);
+    }
+
+    private boolean checkBricksInBox(List<String> instructionList, ArrayList<String> bricksInBox) {
+        return bricksInBox.contains(instructionList);
     }
 
     private int extractNumber(String str) {
@@ -88,7 +96,22 @@ public class Main {
 
         }
     }
+
+    private void assignBricksToInstructions(ArrayList<String> instructions, ArrayList<String> bricksInBox) {
+        Map<Integer, List<String>> groupedMap = instructions.stream().collect(Collectors.groupingBy(this::extractNumber));
+
+        for (List<String> instructionList : groupedMap.values()) {
+            boolean hasAllBricks = checkBricksInBox(instructionList, bricksInBox);
+            if (hasAllBricks) {
+                removeBricksFromBox(instructionList, bricksInBox);
+            } else {
+                continue;
+            }
+        }
+        List<String> otherInstructions = instructions.stream().filter(instruction -> !isBolekPriority(instruction.charAt(0))).collect(Collectors.toList());
+    }
 }
+
 
 //    Liczbę klocków użytych w etapie I
 //    Liczbę klocków użytych w etapie II
