@@ -82,7 +82,6 @@ public class Main {
 
         Map<Integer, List<String>> filteredMapIsBolekPriorityInstructions = groupedMap.entrySet().stream().filter(entry -> entry.getKey() % 3 == 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
-
         Map<Integer, List<String>> filteredMapOtherInstructions = groupedMap.entrySet().stream().filter(entry -> entry.getKey() % 3 != 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
 
@@ -127,7 +126,9 @@ public class Main {
 
         bricksInBox.removeIf(element -> {
             String targetPattern = element.split(":")[1];
-            return instructionCountMap.containsKey(targetPattern) && instructionCountMap.get(targetPattern) > 0 &&
+            return instructionCountMap
+                    .containsKey(targetPattern) && instructionCountMap
+                    .get(targetPattern) > 0 &&
                     instructionCountMap.compute(targetPattern, (key, count) -> count - 1) >= 0;
         });
 
@@ -135,18 +136,15 @@ public class Main {
         System.out.println("po" + instructionList);
     }
 
-
     private static boolean checkBricksInBox(List<String> instructionList, ArrayList<String> bricksInBox) {
         return bricksInBox
                 .stream()
                 .map(String -> String
-                        .split(":")[1])
-                .collect(Collectors.toList())
+                        .split(":")[1]).toList()
                 .containsAll(instructionList
                         .stream().map(String -> String
-                                .split(":")[1]).collect(Collectors.toList()));
+                                .split(":")[1]).toList());
     }
-
 
     private static int extractNumber(String str) {
         String numberString = str.split("[^\\d]")[0];
