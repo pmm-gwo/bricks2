@@ -1,5 +1,4 @@
 package com.company;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -18,6 +17,7 @@ public class Main {
         ArrayList<String> bricksInBox = new ArrayList<>();
         ArrayList<String> instructions = new ArrayList<>();
         int unusedBricks = 0;
+
         if (args.length != 1) {
             System.out.println("klops");
             return;
@@ -78,8 +78,6 @@ public class Main {
 
     private static void assignBricksToInstructions(ArrayList<String> instructions, ArrayList<String> bricksInBox) {
 
-//        Map<Integer, List<String>> groupedMap = instructions.stream().collect(Collectors.groupingBy(this::extractNumber));
-
         Map<Integer, List<String>> groupedMap = instructions.stream().collect(Collectors.groupingBy(str -> extractNumber(str)));
 
         Map<Integer, List<String>> filteredMapIsBolekPriorityInstructions = groupedMap.entrySet().stream().filter(entry -> entry.getKey() % 3 == 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -92,6 +90,7 @@ public class Main {
             boolean hasAllBricks = checkBricksInBox(instructionList, bricksInBox);
             if (hasAllBricks) {
                 removeBricksFromBox(instructionList, bricksInBox);
+
             } else {
                 //wypisz i zlicz ile klockow braklo do wykonania danej instrukcji
                 //countMissingBricks()
@@ -100,6 +99,7 @@ public class Main {
         for (List<String> instructionList : filteredMapOtherInstructions.values()) {
             boolean hasAllBricks = checkBricksInBox(instructionList, bricksInBox);
             if (hasAllBricks) {
+
                 removeBricksFromBox(instructionList, bricksInBox);
 //        List<String> bolekInstructions = instructions.stream().filter(instruction -> isBolekPriority(instruction.charAt(0))).collect(Collectors.toList());
 //        System.out.println("Bolek" + bolekInstructions);
@@ -147,9 +147,6 @@ public class Main {
                                 .split(":")[1]).collect(Collectors.toList()));
     }
 
-//    private static boolean isBolekPriority(int instructionNumber) {
-//        return instructionNumber % 3 == 0;
-//    }
 
     private static int extractNumber(String str) {
         String numberString = str.split("[^\\d]")[0];
