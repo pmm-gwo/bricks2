@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -28,12 +29,15 @@ public class Main {
 
     private static void readFile(String path, ArrayList<String> bricksInBox, ArrayList<String> instructions, int unusedBricks) {
         try (FileReader fileReader = new FileReader(path); BufferedReader bufferedReader = new BufferedReader(fileReader)) {
-            //fileReader.isValid;
             String line = bufferedReader.readLine();
-            //Validation
 
-            while (line != null){
-                line=line.replaceAll("[\\\\r\\\\n]", "");
+            while (line != null) {
+                line = line.replaceAll("[\\\\r\\\\n]", "");
+                if (!isValidLine(line)) {
+                    System.out.println("klops");
+                    line = bufferedReader.readLine();
+                    continue;
+                }
                 System.out.println(line);
                 filterNotUsed(line, unusedBricks);
                 putBricksInBox(line, bricksInBox);
@@ -47,10 +51,15 @@ public class Main {
         }
     }
 
-
+    private static boolean isValidLine(String line) {
+        String regex = "^\\d+:[(A-O)]{4}$";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(line);
+        return matcher.matches();
+    }
 
     private static void putBricksInBox(String line, ArrayList<String> bricksInBox) {
-        if (line.startsWith("0")) {
+        if (line.startsWith("0") && (bricksInBox.size() < 10000000)) {
             bricksInBox.add(line);
         }
     }
@@ -62,7 +71,7 @@ public class Main {
     }
 
     private static void addToInstructions(String line, ArrayList<String> instructions) {
-        if (!line.contains("0")) {
+        if (!line.contains("0") && (instructions.size() < 1000)) {
             instructions.add(line);
         }
     }
@@ -74,23 +83,24 @@ public class Main {
         Map<Integer, List<String>> groupedMap = instructions.stream().collect(Collectors.groupingBy(str -> extractNumber(str)));
 
         Map<Integer, List<String>> filteredMapIsBolekPriorityInstructions = groupedMap.entrySet().stream().filter(entry -> entry.getKey() % 3 == 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        System.out.println(filteredMapIsBolekPriorityInstructions);
 
 
         Map<Integer, List<String>> filteredMapOtherInstructions = groupedMap.entrySet().stream().filter(entry -> entry.getKey() % 3 != 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-        System.out.println(filteredMapOtherInstructions);
-//        System.out.println(groupedMap);
+
 
         for (List<String> instructionList : filteredMapIsBolekPriorityInstructions.values()) {
             boolean hasAllBricks = checkBricksInBox(instructionList, bricksInBox);
             if (hasAllBricks) {
                 removeBricksFromBox(instructionList, bricksInBox);
-                System.out.println(bricksInBox);
             } else {
                 //wypisz i zlicz ile klockow braklo do wykonania danej instrukcji
                 //countMissingBricks()
-            }    System.out.println(bricksInBox);
+            }
         }
+        for (List<String> instructionList : filteredMapOtherInstructions.values()) {
+            boolean hasAllBricks = checkBricksInBox(instructionList, bricksInBox);
+            if (hasAllBricks) {
+                removeBricksFromBox(instructionList, bricksInBox);
 //        List<String> bolekInstructions = instructions.stream().filter(instruction -> isBolekPriority(instruction.charAt(0))).collect(Collectors.toList());
 //        System.out.println("Bolek" + bolekInstructions);
 //        Map<Integer, List<String>> groupedMapB = bolekInstructions.stream().collect(Collectors.groupingBy(str -> extractNumber(str)));
@@ -98,46 +108,48 @@ public class Main {
 //        List<String> otherInstructions = instructions.stream().filter(instruction -> !isBolekPriority(instruction.charAt(0))).collect(Collectors.toList());
 //        System.out.println(otherInstructions);
 
+            } else {
+                //wypisz i zlicz ile klockow braklo do wykonania danej instrukcji
+                //countMissingBricks()
+            }
+        }
     }
 
-
     private static void removeBricksFromBox(List<String> instructionList, ArrayList<String> bricksInBox) {
-//        bricksInBox.removeIf(element -> {
-        System.out.println("przed"+instructionList);
-        System.out.println("przed"+bricksInBox);
-            for (String pattern : instructionList) {
-//                if (element.matches(".*:" + pattern.split(":")[1])) {
-//                    return true;
-//                }
-//            }
-//            return false;
-  bricksInBox.removeIf(element -> element.matches(".*:" + pattern.split(":")[1]));
 
 
+        System.out.println("przed" + instructionList);
+        System.out.println("przed" + bricksInBox);
 
+        Map<String, Long> instructionCountMap = instructionList.stream()
+                .map(pattern -> pattern.split(":")[1])
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
-            }
-        System.out.println("po"+bricksInBox);
-        System.out.println("po"+instructionList);
-        }
+        bricksInBox.removeIf(element -> {
+            String targetPattern = element.split(":")[1];
+            return instructionCountMap.containsKey(targetPattern) && instructionCountMap.get(targetPattern) > 0 &&
+                    instructionCountMap.compute(targetPattern, (key, count) -> count - 1) >= 0;
+        });
 
-//    }
+        System.out.println("po" + bricksInBox);
+        System.out.println("po" + instructionList);
+    }
 
 
     private static boolean checkBricksInBox(List<String> instructionList, ArrayList<String> bricksInBox) {
         return bricksInBox
                 .stream()
-                .map(String->String
+                .map(String -> String
                         .split(":")[1])
                 .collect(Collectors.toList())
                 .containsAll(instructionList
-                        .stream().map(String->String
+                        .stream().map(String -> String
                                 .split(":")[1]).collect(Collectors.toList()));
     }
 
-    private static boolean isBolekPriority(int instructionNumber) {
-        return instructionNumber % 3 == 0;
-    }
+//    private static boolean isBolekPriority(int instructionNumber) {
+//        return instructionNumber % 3 == 0;
+//    }
 
     private static int extractNumber(String str) {
         String numberString = str.split("[^\\d]")[0];
