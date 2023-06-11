@@ -5,18 +5,18 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Main {
-static int unusedBricks= 0;
 
     public static void main(String[] args) {
         ArrayList<String> bricksInBox = new ArrayList<>();
         ArrayList<String> instructions = new ArrayList<>();
-//        int unusedBricks = 0;
+        AtomicInteger unusedBricks = new AtomicInteger(0);
 
         if (args.length != 1) {
             System.out.println("klops");
@@ -25,12 +25,12 @@ static int unusedBricks= 0;
         String path = args[0];
         readFile(path, bricksInBox, instructions, unusedBricks);
         assignBricksToInstructions(instructions, bricksInBox);
-//        System.out.println(countLeftedBricks(unusedBricks, bricksInBox));
+        System.out.println("lefted"+countLeftedBricks(unusedBricks, bricksInBox));
 //        showResults
 
     }
 
-    private static void readFile(String path, ArrayList<String> bricksInBox, ArrayList<String> instructions, int unusedBricks) {
+    private static void readFile(String path, ArrayList<String> bricksInBox, ArrayList<String> instructions, AtomicInteger unusedBricks) {
         try (FileReader fileReader = new FileReader(path); BufferedReader bufferedReader = new BufferedReader(fileReader)) {
             String line = bufferedReader.readLine();
 
@@ -43,7 +43,6 @@ static int unusedBricks= 0;
                 }
                 System.out.println(line);
                 filterNotUsed(line, unusedBricks);
-                System.out.println("unused"+unusedBricks);
                 putBricksInBox(line, bricksInBox);
                 addToInstructions(line, instructions);
                 line = bufferedReader.readLine();
@@ -66,10 +65,9 @@ static int unusedBricks= 0;
         }
     }
 
-    private static void filterNotUsed(String line, int unusedBricks) {
+    private static void filterNotUsed(String line, AtomicInteger unusedBricks) {
         if (line.contains("O")) {
-            unusedBricks++;
-            System.out.println("unused"+unusedBricks);
+            unusedBricks.incrementAndGet();
         }
     }
 
@@ -147,11 +145,11 @@ static int unusedBricks= 0;
                         .stream().map(String -> String
                                 .split(":")[1]).toList());
     }
-//    public static int countLeftedBricks(int unusedBricks, ArrayList<String> bricksInBox ){
-//        int leftedBricks = bricksInBox.size() + unusedBricks;
-//        System.out.println("unused"+unusedBricks);
-//        return leftedBricks;
-//    }
+    public static int countLeftedBricks(AtomicInteger unusedBricks, ArrayList<String> bricksInBox ){
+        int leftedBricks = bricksInBox.size() + unusedBricks.get();
+        System.out.println("unused"+unusedBricks);
+        return leftedBricks;
+    }
 
     private static int extractNumber(String str) {
         String numberString = str.split("[^\\d]")[0];
