@@ -1,22 +1,24 @@
 package com.company;
+
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Main {
+    private  static int unusedBricks = 0;
+
 
     public static void main(String[] args) {
         ArrayList<String> bricksInBox = new ArrayList<>();
         ArrayList<String> instructions = new ArrayList<>();
-        AtomicInteger unusedBricks = new AtomicInteger(0);
+//        int unusedBricks = 0;
 
         if (args.length != 1) {
             System.out.println("klops");
@@ -25,12 +27,11 @@ public class Main {
         String path = args[0];
         readFile(path, bricksInBox, instructions, unusedBricks);
         assignBricksToInstructions(instructions, bricksInBox);
-        System.out.println("lefted"+countLeftedBricks(unusedBricks, bricksInBox));
-//        showResults
+        printResults(unusedBricks, bricksInBox);
 
     }
 
-    private static void readFile(String path, ArrayList<String> bricksInBox, ArrayList<String> instructions, AtomicInteger unusedBricks) {
+    private static void readFile(String path, ArrayList<String> bricksInBox, ArrayList<String> instructions, int unusedBricks) {
         try (FileReader fileReader = new FileReader(path); BufferedReader bufferedReader = new BufferedReader(fileReader)) {
             String line = bufferedReader.readLine();
 
@@ -42,7 +43,7 @@ public class Main {
                     continue;
                 }
                 System.out.println(line);
-                filterNotUsed(line, unusedBricks);
+               unusedBricks= filterNotUsed(line, unusedBricks);
                 putBricksInBox(line, bricksInBox);
                 addToInstructions(line, instructions);
                 line = bufferedReader.readLine();
@@ -62,12 +63,6 @@ public class Main {
     private static void putBricksInBox(String line, ArrayList<String> bricksInBox) {
         if (line.startsWith("0") && (bricksInBox.size() < 10000000)) {
             bricksInBox.add(line);
-        }
-    }
-
-    private static void filterNotUsed(String line, AtomicInteger unusedBricks) {
-        if (line.contains("O")) {
-            unusedBricks.incrementAndGet();
         }
     }
 
@@ -145,17 +140,42 @@ public class Main {
                         .stream().map(String -> String
                                 .split(":")[1]).toList());
     }
-    public static int countLeftedBricks(AtomicInteger unusedBricks, ArrayList<String> bricksInBox ){
-        int leftedBricks = bricksInBox.size() + unusedBricks.get();
-        System.out.println("unused"+unusedBricks);
-        return leftedBricks;
-    }
 
     private static int extractNumber(String str) {
         String numberString = str.split("[^\\d]")[0];
         return Integer.parseInt(numberString);
     }
+
+    private static void printResults(int unusedBricks, ArrayList<String>bricksInBox){
+        //3
+        System.out.println("lefted" + countLeftedBricks(unusedBricks, bricksInBox));
+        //4
+
+
+    }
+    private static int filterNotUsed(String line, int unusedBricks) {
+        if (line.contains("O")) {
+            unusedBricks++;
+        }
+        return unusedBricks;
+    }
+    public static int countLeftedBricks(int unusedBricks, ArrayList<String> bricksInBox) {
+        int leftedBricks = bricksInBox.size() ;
+        System.out.println("unused" + unusedBricks);
+        return leftedBricks;
+    }
+//    Wynikiem prawidłowego wykonania programu powinno być sześć liczb w kolejnych wierszach, reprezentujących odpowiednio:
+//
+//
+//
+//    Liczbę klocków użytych w etapie I 
+//    Liczbę klocków użytych w etapie II 
+//    Liczbę klocków, które pozostały w pudełku po zakończeniu budowania 
+//    Łączną liczbę klocków, których brakowało w pudełku podczas realizacji poszczególnych instrukcji 
+//    Liczbę budowli, które udało się zbudować 
+//    Liczbę budowli, których nie udało się zbudować 
 }
+
 
 //    Liczbę klocków użytych w etapie I
 //    Liczbę klocków użytych w etapie II
