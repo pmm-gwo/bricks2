@@ -1,8 +1,6 @@
-package com.company;
-
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -15,9 +13,9 @@ public class Bricks {
 
     private static int countCompletedBolekInstructions = 0;
     private static int countCompletedOtherInstructions = 0;
-    private static int countUncompletedInstructions = 0;
-    private static int countBricksUsedForBolekBuildings = 0;
     private static int countBricksUsedForOtherBuildings = 0;
+    private static int countBricksUsedForBolekBuildings = 0;
+    private static int countUncompletedInstructions = 0;
     private static int unusedBricks = 0;
 
     public static void main(String[] args) {
@@ -25,39 +23,29 @@ public class Bricks {
         ArrayList<String> instructions = new ArrayList<>();
 
 
-        if (args.length != 1) {
-            System.out.println("klops");
-            return;
-        }
-        String path = args[0];
-        readFile(path, bricksInBox, instructions);
-        assignBricksToInstructions(instructions, bricksInBox);
-        printResults(instructions, bricksInBox);
-
-
-    }
-
-    private static void readFile(String path, ArrayList<String> bricksInBox, ArrayList<String> instructions) {
-        try (FileReader fileReader = new FileReader(path); BufferedReader bufferedReader = new BufferedReader(fileReader)) {
-            String line = bufferedReader.readLine();
-
-            while (line != null) {
-                line = line.replaceAll("[\\\\rn]", "");
-                if (!isValidLine(line)) {
-                    System.out.println("klops");
-                    line = bufferedReader.readLine();
-                    continue;
-                }
-                if (!filterNotUsed(line)) {
-                    putBricksInBox(line, bricksInBox);
-
-                    addToInstructions(line, instructions);
-                }
-                line = bufferedReader.readLine();
-
+        try (BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(System.in))) {
+            String line;
+            while ((line = bufferedReader.readLine()) != null) {
+                processLine(line, bricksInBox, instructions);
             }
         } catch (IOException exception) {
             System.out.println("klops");
+            return;
+        }
+
+        assignBricksToInstructions(instructions, bricksInBox);
+        printResults(bricksInBox, instructions);
+    }
+
+    private static void processLine(String line, ArrayList<String> bricksInBox, ArrayList<String> instructions) {
+        line = line.replaceAll("[\\\\rn]", "");
+        if (!isValidLine(line)) {
+            System.out.println("klops");
+            return;
+        }
+        if (!filterNotUsed(line)) {
+            putBricksInBox(line, bricksInBox);
+            addToInstructions(line, instructions);
         }
     }
 
@@ -86,6 +74,7 @@ public class Bricks {
         }
     }
 
+
     private static void assignBricksToInstructions(ArrayList<String> instructions, ArrayList<String> bricksInBox) {
 
         Map<Integer, List<String>> groupedMap = instructions.stream().collect(Collectors.groupingBy(Bricks::extractNumber));
@@ -102,10 +91,8 @@ public class Bricks {
                 countCompletedBolekInstructions++;
 
             } else {
-                System.out.println(instructionList);
                 countUncompletedInstructions++;
                 countMissingBricks(instructionList, bricksInBox);
-                System.out.println("missing2 " +countMissingBricks(instructionList, bricksInBox));
             }
         }
         for (List<String> instructionList : filteredMapOtherInstructions.values()) {
@@ -119,17 +106,29 @@ public class Bricks {
             } else {
                 countUncompletedInstructions++;
                 countMissingBricks(instructionList, bricksInBox);
-                System.out.println("missing1 " + countMissingBricks(instructionList, bricksInBox));
             }
 
         }
 
     }
 
+
+    private static int countMissingBricks(List<String> instructionList, ArrayList<String> bricksInBox) {
+        List<String> bricksInBoxCodes = bricksInBox.stream()
+                .map(brick -> brick.split(":")[1])
+                .toList();
+
+        List<String> missingBricks = instructionList.stream()
+                .map(instruction -> instruction.split(":")[1])
+                .filter(brickCode -> !bricksInBoxCodes.contains(brickCode))
+                .toList();
+
+        return missingBricks.size();
+    }
+
+
     private static void removeBricksFromBox(List<String> instructionList, ArrayList<String> bricksInBox) {
 
-        System.out.println("przed" + instructionList);
-        System.out.println("przed" + bricksInBox);
 
         Map<String, Long> instructionCountMap = instructionList.stream().map(pattern -> pattern.split(":")[1]).collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
@@ -138,7 +137,7 @@ public class Bricks {
             return instructionCountMap.containsKey(targetPattern) && (instructionCountMap.get(targetPattern) > 0) && (instructionCountMap.compute(targetPattern, (key, count) -> count - 1) >= 0);
         });
 
-        System.out.println("po" + bricksInBox);
+
     }
 
     private static boolean checkBricksInBox(List<String> instructionList, ArrayList<String> bricksInBox) {
@@ -151,31 +150,23 @@ public class Bricks {
                         .map(String -> String.split(":")[1])
                         .toList());
     }
-    private static int countMissingBricks(List<String> instructionList, ArrayList<String> bricksInBox) {
-        List<String> bricksInBoxCodes = bricksInBox.stream()
-                .map(brick -> brick.split(":")[1])
-                .toList();
 
-        return (int) instructionList.stream()
-                .map(instruction -> instruction.split(":")[1])
-                .filter(bricksInBoxCodes::contains)
-                .count();
-    }
 
     private static int extractNumber(String str) {
         String numberString = str.split("[^\\d]")[0];
         return Integer.parseInt(numberString);
     }
 
+
     private static void printResults(ArrayList<String> bricksInBox, List<String> instructionList) {
         int countBricksUsedToCompleteInstructions = countCompletedBolekInstructions + countCompletedOtherInstructions;
 
-        System.out.println("1 -> " + countBricksUsedForBolekBuildings);
-        System.out.println("2 -> " + countBricksUsedForOtherBuildings);
-        System.out.println("3 -> " + countRemainingBricks(bricksInBox));
-        System.out.println("3 -> " + countMissingBricks(instructionList, bricksInBox));
-        System.out.println("5 -> " + countBricksUsedToCompleteInstructions);
-        System.out.println("6 -> " + countUncompletedInstructions);
+        System.out.println(countBricksUsedForBolekBuildings);
+        System.out.println(countBricksUsedForOtherBuildings);
+        System.out.println(countRemainingBricks(bricksInBox));
+        System.out.println(countMissingBricks(instructionList, bricksInBox));
+        System.out.println(countBricksUsedToCompleteInstructions);
+        System.out.println(countUncompletedInstructions);
 
     }
 
@@ -192,4 +183,3 @@ public class Bricks {
         return bricksInBox.size() + unusedBricks;
     }
 }
-
