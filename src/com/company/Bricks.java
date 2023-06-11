@@ -11,32 +11,33 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class Main {
+public class Bricks {
 
     private static int countCompletedBolekInstructions = 0;
     private static int countCompletedOtherInstructions = 0;
-    private static int countBricksUsedForOtherBuildings = 0;
-    private static int countBricksUsedForBolekBuildings = 0;
     private static int countUncompletedInstructions = 0;
-
+    private static int countBricksUsedForBolekBuildings = 0;
+    private static int countBricksUsedForOtherBuildings = 0;
+    private static int unusedBricks = 0;
 
     public static void main(String[] args) {
         ArrayList<String> bricksInBox = new ArrayList<>();
         ArrayList<String> instructions = new ArrayList<>();
-        int unusedBricks = 0;
+
 
         if (args.length != 1) {
             System.out.println("klops");
             return;
         }
         String path = args[0];
-        readFile(path, bricksInBox, instructions, unusedBricks);
+        readFile(path, bricksInBox, instructions);
         assignBricksToInstructions(instructions, bricksInBox);
-        printResults(unusedBricks, bricksInBox);
+        printResults(instructions, bricksInBox);
+
 
     }
 
-    private static void readFile(String path, ArrayList<String> bricksInBox, ArrayList<String> instructions, int unusedBricks) {
+    private static void readFile(String path, ArrayList<String> bricksInBox, ArrayList<String> instructions) {
         try (FileReader fileReader = new FileReader(path); BufferedReader bufferedReader = new BufferedReader(fileReader)) {
             String line = bufferedReader.readLine();
 
@@ -47,11 +48,13 @@ public class Main {
                     line = bufferedReader.readLine();
                     continue;
                 }
-                System.out.println(line);
-                unusedBricks = filterNotUsed(line, unusedBricks);
-                putBricksInBox(line, bricksInBox);
-                addToInstructions(line, instructions);
+                if (!filterNotUsed(line)) {
+                    putBricksInBox(line, bricksInBox);
+
+                    addToInstructions(line, instructions);
+                }
                 line = bufferedReader.readLine();
+
             }
         } catch (IOException exception) {
             System.out.println("klops");
@@ -59,7 +62,13 @@ public class Main {
     }
 
     private static boolean isValidLine(String line) {
-        String regex = "^\\d+:[(A-O)]{4}$";
+        if (line.startsWith("0")) {
+            String regex = "^\\d+:[(A-O)]{4}$";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(line);
+            return matcher.matches();
+        }
+        String regex = "^\\d+:[(A-N)]{4}$";
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(line);
         return matcher.matches();
@@ -79,12 +88,11 @@ public class Main {
 
     private static void assignBricksToInstructions(ArrayList<String> instructions, ArrayList<String> bricksInBox) {
 
-        Map<Integer, List<String>> groupedMap = instructions.stream().collect(Collectors.groupingBy(Main::extractNumber));
+        Map<Integer, List<String>> groupedMap = instructions.stream().collect(Collectors.groupingBy(Bricks::extractNumber));
 
         Map<Integer, List<String>> filteredMapIsBolekPriorityInstructions = groupedMap.entrySet().stream().filter(entry -> entry.getKey() % 3 == 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
         Map<Integer, List<String>> filteredMapOtherInstructions = groupedMap.entrySet().stream().filter(entry -> entry.getKey() % 3 != 0).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-
 
         for (List<String> instructionList : filteredMapIsBolekPriorityInstructions.values()) {
             boolean hasAllBricks = checkBricksInBox(instructionList, bricksInBox);
@@ -92,9 +100,12 @@ public class Main {
                 removeBricksFromBox(instructionList, bricksInBox);
                 countBricksUsedForBolekBuildings += instructionList.size();
                 countCompletedBolekInstructions++;
+
             } else {
                 System.out.println(instructionList);
                 countUncompletedInstructions++;
+                countMissingBricks(instructionList, bricksInBox);
+                System.out.println("missing2 " +countMissingBricks(instructionList, bricksInBox));
             }
         }
         for (List<String> instructionList : filteredMapOtherInstructions.values()) {
@@ -104,17 +115,13 @@ public class Main {
                 removeBricksFromBox(instructionList, bricksInBox);
                 countBricksUsedForOtherBuildings += instructionList.size();
                 countCompletedOtherInstructions++;
-//        List<String> bolekInstructions = instructions.stream().filter(instruction -> isBolekPriority(instruction.charAt(0))).collect(Collectors.toList());
-//        System.out.println("Bolek" + bolekInstructions);
-//        Map<Integer, List<String>> groupedMapB = bolekInstructions.stream().collect(Collectors.groupingBy(str -> extractNumber(str)));
-//        System.out.println("B" + groupedMapB);
-//        List<String> otherInstructions = instructions.stream().filter(instruction -> !isBolekPriority(instruction.charAt(0))).collect(Collectors.toList());
-//        System.out.println(otherInstructions);
 
             } else {
-                System.out.println(instructionList);
                 countUncompletedInstructions++;
+                countMissingBricks(instructionList, bricksInBox);
+                System.out.println("missing1 " + countMissingBricks(instructionList, bricksInBox));
             }
+
         }
 
     }
@@ -124,30 +131,35 @@ public class Main {
         System.out.println("przed" + instructionList);
         System.out.println("przed" + bricksInBox);
 
-        Map<String, Long> instructionCountMap = instructionList.stream()
-                .map(pattern -> pattern.split(":")[1])
-                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+        Map<String, Long> instructionCountMap = instructionList.stream().map(pattern -> pattern.split(":")[1]).collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
 
         bricksInBox.removeIf(element -> {
             String targetPattern = element.split(":")[1];
-            return instructionCountMap
-                    .containsKey(targetPattern) && (instructionCountMap
-                    .get(targetPattern) > 0) &&
-                    (instructionCountMap.compute(targetPattern, (key, count) -> count - 1) >= 0);
+            return instructionCountMap.containsKey(targetPattern) && (instructionCountMap.get(targetPattern) > 0) && (instructionCountMap.compute(targetPattern, (key, count) -> count - 1) >= 0);
         });
 
         System.out.println("po" + bricksInBox);
-        System.out.println("po" + instructionList);
     }
 
     private static boolean checkBricksInBox(List<String> instructionList, ArrayList<String> bricksInBox) {
         return bricksInBox
                 .stream()
-                .map(String -> String
-                        .split(":")[1]).toList()
+                .map(String -> String.split(":")[1])
+                .toList()
                 .containsAll(instructionList
-                        .stream().map(String -> String
-                                .split(":")[1]).toList());
+                        .stream()
+                        .map(String -> String.split(":")[1])
+                        .toList());
+    }
+    private static int countMissingBricks(List<String> instructionList, ArrayList<String> bricksInBox) {
+        List<String> bricksInBoxCodes = bricksInBox.stream()
+                .map(brick -> brick.split(":")[1])
+                .toList();
+
+        return (int) instructionList.stream()
+                .map(instruction -> instruction.split(":")[1])
+                .filter(bricksInBoxCodes::contains)
+                .count();
     }
 
     private static int extractNumber(String str) {
@@ -155,41 +167,29 @@ public class Main {
         return Integer.parseInt(numberString);
     }
 
-    private static void printResults(int unusedBricks, ArrayList<String> bricksInBox) {
-        //1 One stage
-//        int buildingBolek = bricksInBox.size() -;
-        System.out.println("1 ->  Liczbę klocków użytych w etapie I " + countBricksUsedForBolekBuildings);
-        System.out.println("2 -> Liczbę klocków użytych w etapie II " + countBricksUsedForOtherBuildings);
+    private static void printResults(ArrayList<String> bricksInBox, List<String> instructionList) {
         int countBricksUsedToCompleteInstructions = countCompletedBolekInstructions + countCompletedOtherInstructions;
-        System.out.println("5 -> Liczbę budowli, które udało się zbudowac -> " + countBricksUsedToCompleteInstructions);
+
+        System.out.println("1 -> " + countBricksUsedForBolekBuildings);
+        System.out.println("2 -> " + countBricksUsedForOtherBuildings);
+        System.out.println("3 -> " + countRemainingBricks(bricksInBox));
+        System.out.println("3 -> " + countMissingBricks(instructionList, bricksInBox));
+        System.out.println("5 -> " + countBricksUsedToCompleteInstructions);
         System.out.println("6 -> " + countUncompletedInstructions);
-        //3
-
-        System.out.println("lefted nie dziala  " + unusedBricks);
 
     }
 
-    private static int filterNotUsed(String line, int unusedBricks) {
-        if (line.contains("O")) {
+    private static boolean filterNotUsed(String line) {
+        if ((line.startsWith("0")) && (line.contains("O"))) {
             unusedBricks++;
+            return true;
         }
-        System.out.println("uu" + unusedBricks);
-        return unusedBricks;
+        return false;
     }
 
-    public static int countLeftedBricks(int unusedBricks, ArrayList<String> bricksInBox) {
+    public static int countRemainingBricks(ArrayList<String> bricksInBox) {
 
-        int leftedBricks = bricksInBox.size() + unusedBricks;
-
-        System.out.println("unused" + unusedBricks);
-        return leftedBricks;
+        return bricksInBox.size() + unusedBricks;
     }
 }
 
-
-//    Liczbę klocków użytych w etapie I
-//    Liczbę klocków użytych w etapie II
-//    Liczbę klocków, które pozostały w pudełku po zakończeniu budowania
-//    Łączną liczbę klocków, których brakowało w pudełku podczas realizacji poszczególnych instrukcji
-//    Liczbę budowli, które udało się zbudowac
-//    Liczbę budowli, których nie udało się zbudować
