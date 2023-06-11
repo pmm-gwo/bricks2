@@ -12,13 +12,18 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Main {
-    private  static int unusedBricks = 0;
+
+    private static int countCompletedBolekInstructions = 0;
+    private static int countCompletedOtherInstructions = 0;
+    private static int countBricksUsedForOtherBuildings = 0;
+    private static int countBricksUsedForBolekBuildings = 0;
+    private static int countUncompletedInstructions = 0;
 
 
     public static void main(String[] args) {
         ArrayList<String> bricksInBox = new ArrayList<>();
         ArrayList<String> instructions = new ArrayList<>();
-//        int unusedBricks = 0;
+        int unusedBricks = 0;
 
         if (args.length != 1) {
             System.out.println("klops");
@@ -43,7 +48,7 @@ public class Main {
                     continue;
                 }
                 System.out.println(line);
-               unusedBricks= filterNotUsed(line, unusedBricks);
+                unusedBricks = filterNotUsed(line, unusedBricks);
                 putBricksInBox(line, bricksInBox);
                 addToInstructions(line, instructions);
                 line = bufferedReader.readLine();
@@ -85,10 +90,11 @@ public class Main {
             boolean hasAllBricks = checkBricksInBox(instructionList, bricksInBox);
             if (hasAllBricks) {
                 removeBricksFromBox(instructionList, bricksInBox);
-
+                countBricksUsedForBolekBuildings += instructionList.size();
+                countCompletedBolekInstructions++;
             } else {
-                //wypisz i zlicz ile klockow braklo do wykonania danej instrukcji
-                //countMissingBricks()
+                System.out.println(instructionList);
+                countUncompletedInstructions++;
             }
         }
         for (List<String> instructionList : filteredMapOtherInstructions.values()) {
@@ -96,6 +102,8 @@ public class Main {
             if (hasAllBricks) {
 
                 removeBricksFromBox(instructionList, bricksInBox);
+                countBricksUsedForOtherBuildings += instructionList.size();
+                countCompletedOtherInstructions++;
 //        List<String> bolekInstructions = instructions.stream().filter(instruction -> isBolekPriority(instruction.charAt(0))).collect(Collectors.toList());
 //        System.out.println("Bolek" + bolekInstructions);
 //        Map<Integer, List<String>> groupedMapB = bolekInstructions.stream().collect(Collectors.groupingBy(str -> extractNumber(str)));
@@ -104,10 +112,11 @@ public class Main {
 //        System.out.println(otherInstructions);
 
             } else {
-                //wypisz i zlicz ile klockow braklo do wykonania danej instrukcji
-                //countMissingBricks()
+                System.out.println(instructionList);
+                countUncompletedInstructions++;
             }
         }
+
     }
 
     private static void removeBricksFromBox(List<String> instructionList, ArrayList<String> bricksInBox) {
@@ -146,34 +155,35 @@ public class Main {
         return Integer.parseInt(numberString);
     }
 
-    private static void printResults(int unusedBricks, ArrayList<String>bricksInBox){
+    private static void printResults(int unusedBricks, ArrayList<String> bricksInBox) {
+        //1 One stage
+//        int buildingBolek = bricksInBox.size() -;
+        System.out.println("1 ->  Liczbę klocków użytych w etapie I " + countBricksUsedForBolekBuildings);
+        System.out.println("2 -> Liczbę klocków użytych w etapie II " + countBricksUsedForOtherBuildings);
+        int countBricksUsedToCompleteInstructions = countCompletedBolekInstructions + countCompletedOtherInstructions;
+        System.out.println("5 -> Liczbę budowli, które udało się zbudowac -> " + countBricksUsedToCompleteInstructions);
+        System.out.println("6 -> " + countUncompletedInstructions);
         //3
-        System.out.println("lefted" + countLeftedBricks(unusedBricks, bricksInBox));
-        //4
 
+        System.out.println("lefted nie dziala  " + unusedBricks);
 
     }
+
     private static int filterNotUsed(String line, int unusedBricks) {
         if (line.contains("O")) {
             unusedBricks++;
         }
+        System.out.println("uu" + unusedBricks);
         return unusedBricks;
     }
+
     public static int countLeftedBricks(int unusedBricks, ArrayList<String> bricksInBox) {
-        int leftedBricks = bricksInBox.size() ;
+
+        int leftedBricks = bricksInBox.size() + unusedBricks;
+
         System.out.println("unused" + unusedBricks);
         return leftedBricks;
     }
-//    Wynikiem prawidłowego wykonania programu powinno być sześć liczb w kolejnych wierszach, reprezentujących odpowiednio:
-//
-//
-//
-//    Liczbę klocków użytych w etapie I 
-//    Liczbę klocków użytych w etapie II 
-//    Liczbę klocków, które pozostały w pudełku po zakończeniu budowania 
-//    Łączną liczbę klocków, których brakowało w pudełku podczas realizacji poszczególnych instrukcji 
-//    Liczbę budowli, które udało się zbudować 
-//    Liczbę budowli, których nie udało się zbudować 
 }
 
 

@@ -12,6 +12,7 @@
 3:BBUB\n
 4:DDOD
 6:BBBB\n
+6:BBBB\n
 8:DDOD
 9:BBBB\n
 7:CCOC\n

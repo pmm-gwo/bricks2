@@ -1,12 +1,9 @@
 0:AAAA
 0:BBBB\n
 0:BBBB\n
-0:CCOC\n
 0:BBBB\n
 0:BBBB\n
-1:BBBB\n
-1:BBUB\n
-1:BBBB\n
+1:AAAA\n
 2:AAAA\n
 3:AAAOHY\n
 3:BBBB\n
@@ -15,8 +12,6 @@
 3:BBUB\n
 4:DDOD
 6:BBBB\n
-6:CCOC\n
 8:DDOD
-6:AAAOHY\n
 9:BBBB\n
 7:CCOC\n
